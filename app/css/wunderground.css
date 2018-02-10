@@ -1,0 +1,106 @@
+/*Custom CSS*/
+.wunderground {
+	width: 100%;
+}
+
+.clear {
+	clear: both;
+}
+
+.weather {
+	width: 100%;
+}
+
+.col-1, .col-2 {
+	width: 100%;
+	float:left;
+	height:  80px;
+	border-bottom: 3px solid white;
+}
+
+.icon, .aktuell, .forecast, .hum, .temp {
+	/* background-color: #212121; */
+	height: 80px;
+	float: left;
+}
+
+.icon {
+	width:25%;
+}
+.temp, .hum, .temp_high, .temp_low {
+	width: 25%
+}
+
+.aktuell {
+	width: 75%;
+}
+
+.forecast > .caption {
+	padding: 5px 0 0 0;
+}
+
+#temp, #hum, .unit {
+	float:left;
+	height: 80px;
+	/* background-color:#212121; */
+	margin-top: 10px;
+	height: 70px;
+}
+
+
+.icon {
+	text-align: center;
+	vertical-align: middle;
+	/* padding: 0; */
+	font-size: 40px;
+	line-height: 80px;
+	color: #007dcd;
+	float: left;
+	width: 25%;
+}
+
+.aktuell, .forecast {
+	width:75%;
+	font-family: "Helvetica, Arial", sans-serif;
+	font-size: 14px;
+}
+
+.forecast_str_style {
+	/* background-color:#212121; */
+	font-family: "Oswald", sans-serif;
+	font-size: 12px;
+	float:left;
+	margin-top: 5px;
+}
+
+#temp_high, #temp_low {
+	width: 25%;
+	/* background-color:#212121; */
+	float: left;
+}
+
+.temp-style {
+	height: 70px;
+	/* background-color:#212121; */
+	font-family: "Oswald", sans-serif;
+	font-size: 34px;
+	float: left;
+	margin-top: 10px;
+}
+
+#weather_str {
+	font-family: "Oswald", sans-serif;
+	font-size: 20px;
+}
+#forecast_str {
+	font-family: "Oswald", sans-serif;
+	font-size: 12px;
+}
+.temp, .hum, .temp_high, .temp_low {
+	font-family: "Oswald", sans-serif;
+	font-size: 34px;
+	float: left;
+	width: 25%;
+	/* background-color: #212121; */
+}
+.space {height: 4px;}

@@ -1,0 +1,32 @@
+{ "name": "pimatic-wunderground",
+  "description": "Wunderground plugin",
+  "author": "Paul Schmidt",
+  "license": "MIT",
+  "main": "wunderground",
+  "files": [
+    "wunderground.coffee",
+    "README.md",
+    "wunderground-config-schema.coffee",
+	"device-config-schema.coffee",
+    "app"
+  ],
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/saxn-paule/pimatic-wunderground.git"
+  },
+  "bugs": {
+    "url": "https://github.com/saxn-paule/pimatic-wunderground/issues"
+  },
+  "configSchema": "wunderground-config-schema.coffee",
+  "dependencies": {
+    "request": "latest"
+  },
+  "peerDependencies": {
+    "pimatic": "0.9.*"
+  },
+  "engines": {
+    "node": ">0.8.x",
+    "npm": ">1.1.x"
+  }
+}
