@@ -35,7 +35,7 @@
 	width: 75%;
 }
 
-.forecast > .caption {
+.forecast > .caption, .aktuell > .caption {
 	padding: 5px 0 0 0;
 }
 
@@ -60,6 +60,7 @@
 }
 
 .aktuell, .forecast {
+	white-space: normal;
 	width:75%;
 	font-family: "Helvetica, Arial", sans-serif;
 	font-size: 14px;
