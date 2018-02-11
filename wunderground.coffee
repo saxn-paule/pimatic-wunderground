@@ -5,8 +5,8 @@ module.exports = (env) ->
   M = env.matcher
   t = env.require('decl-api').types
   Request = require 'request'
-  actualUrl = "http://api.wunderground.com/api/{apiKey}/conditions/lang:DL/q/{country}/{state}{city}.json";
-  forecastUrl = "http://api.wunderground.com/api/{apiKey}/forecast/lang:DL/q/{country}/{state}{city}.json";
+  actualUrl = "http://api.wunderground.com/api/{apiKey}/conditions/lang:{lang}/q/{country}/{state}{city}.json";
+  forecastUrl = "http://api.wunderground.com/api/{apiKey}/forecast/lang:{lang}/q/{country}/{state}{city}.json";
 
   class WundergroundPlugin extends env.plugins.Plugin
 
@@ -25,12 +25,13 @@ module.exports = (env) ->
           mobileFrontend.registerAssetFile 'html', "pimatic-wunderground/app/wundergroundTempl-template.html"
           mobileFrontend.registerAssetFile 'css', "pimatic-wunderground/app/css/wunderground.css"
           mobileFrontend.registerAssetFile 'css', "pimatic-wunderground/app/css/weather-icons.css"
+          ###
           mobileFrontend.registerAssetFile 'eot', "pimatic-wunderground/app/fonts/weathericons-regular-webfont.eot"
           mobileFrontend.registerAssetFile 'svg', "pimatic-wunderground/app/fonts/weathericons-regular-webfont.svg"
           mobileFrontend.registerAssetFile 'ttf', "pimatic-wunderground/app/fonts/weathericons-regular-webfont.ttf"
           mobileFrontend.registerAssetFile 'woff', "pimatic-wunderground/app/fonts/weathericons-regular-webfont.woff"
           mobileFrontend.registerAssetFile 'woff2', "pimatic-wunderground/app/fonts/weathericons-regular-webfont.woff2"
-
+          ###
         return
 
   class WundergroundDevice extends env.devices.Device
@@ -49,6 +50,7 @@ module.exports = (env) ->
       @state = @config.state
       @city = @config.city
       @days = @config.days
+      @lang = @config.lang or 'DL'
       @weather = ''
 
       @reloadWeather()
@@ -165,7 +167,7 @@ module.exports = (env) ->
       return icon
 
     reloadWeather: ->
-      url = actualUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city)
+      url = actualUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
       if @state? and @state.length > 0
         url = url.replace('{state}', @state + '/')
       else
@@ -224,7 +226,7 @@ module.exports = (env) ->
           if @days and @days > 1
             fcStr = ''
 
-            url = forecastUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city)
+            url = forecastUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
             if @state? and @state.length > 0
               url = url.replace('{state}', @state + '/')
             else

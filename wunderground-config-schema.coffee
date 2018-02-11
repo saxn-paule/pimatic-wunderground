@@ -24,4 +24,8 @@ module.exports = {
 			description: "The city"
 			type: "string"
 			default: ""
+		lang:
+			description: "The language"
+			type: "string"
+			default: "DL"
 }
