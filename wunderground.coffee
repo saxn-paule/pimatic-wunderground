@@ -200,7 +200,7 @@ module.exports = (env) ->
           pc = pc + '<div class="col-1">'
           pc = pc + ' <div class="icon"><i id="icon" class=""></i></div>'
           pc = pc + ' <div class="aktuell">'
-          pc = pc + '   <div class="caption">Aktuelles Wetter:</div>'
+          pc = pc + '   <div class="caption"></div>'
           pc = pc + '   <div id="weather_str"></div>'
           pc = pc + ' </div>'
           pc = pc + '</div>'
@@ -214,10 +214,12 @@ module.exports = (env) ->
           weather_str = data.current_observation.weather
           temp = data.current_observation.temp_c
           hum = data.current_observation.relative_humidity
+          location = data.current_observation.display_location.full
 
           icon = @detectIconClass(data.current_observation.icon)
 
           pc = pc.replace('<i id="icon" class="">', '<i id="icon" class="' + icon + '">')
+          pc = pc.replace('<div class="caption">', '<div class="caption">' + location)
           pc = pc.replace('<div id="weather_str">', '<div id="weather_str">' + weather_str)
           pc = pc.replace('<div id="temp">', '<div id="temp">' + temp)
           pc = pc.replace('<div id="hum">', '<div id="hum">' + hum)
@@ -255,13 +257,14 @@ module.exports = (env) ->
                     while i <= @days
                       day = i + 1
                       fcStr = fcStr + '<div class="col-1">' + '<div class="icon"><i id="icon_f_' + i + '" class=""></i></div>'
-                      fcStr = fcStr + '<div class="forecast"><div class="caption">Vorschau f&uuml;r Tag ' + day + ':</div><div class="forecast_str_style" id="forecast_str_' + i + '"></div></div>' + '</div>'
+                      fcStr = fcStr + '<div class="forecast"><div class="caption' + i + '"></div><div class="forecast_str_style" id="forecast_str_' + i + '"></div></div>' + '</div>'
                       fcStr = fcStr + '<div class="col-2">' + '<div class="icon"><i class="wi wi-thermometer"></i><i class="wi wi-direction-up"></i></div>' + '<div class="temp_high"><div class="temp-style" id="temp_high_' + i + '"></div><div class="unit">&deg;C</div></div>'
                       fcStr = fcStr + '<div class="icon"><i class="wi wi-thermometer-exterior"></i><i class="wi wi-direction-down"></i></div>' + '<div class="temp_low"><div class="temp-style" id="temp_low_' + i + '"></div><div class="unit">&deg;C</div></div>' + '</div>'
                       i++
 
                     i = 1
                     while i <= @days
+                      weekday = data.forecast.simpleforecast.forecastday[i].date.weekday
                       forecast_str = data.forecast.txt_forecast.forecastday[i + 1].fcttext_metric
                       temp_high = data.forecast.simpleforecast.forecastday[i].high.celsius
                       temp_low = data.forecast.simpleforecast.forecastday[i].low.celsius
@@ -272,6 +275,7 @@ module.exports = (env) ->
                       fcStr = fcStr.replace('id="forecast_str_' + i + '">', 'id="forecast_str_' + i + '">' + forecast_str)
                       fcStr = fcStr.replace('id="temp_high_' + i + '">', 'id="temp_high_' + i + '">' + temp_high)
                       fcStr = fcStr.replace('id="temp_low_' + i + '">', 'id="temp_low_' + i + '">' + temp_low)
+                      fcStr = fcStr.replace('<div class="caption' + i + '">', '<div class="caption">' + weekday)
                       i++
 
                     pc = pc + fcStr
