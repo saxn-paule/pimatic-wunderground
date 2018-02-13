@@ -41,6 +41,22 @@ module.exports = (env) ->
       weather:
         description: 'the weather data'
         type: t.string
+      currentTemp:
+        description: 'the current temperature in °C'
+        type: t.number
+      currentWind:
+        description: 'the current wind speed in km/h'
+        type: t.number
+      currentWindString:
+        description: 'the current wind description'
+        type: t.string
+      currentWeather:
+        description: 'the current weather description'
+        type: t.string
+      currentGust:
+        description: 'the current gust speed in km/h'
+        type: t.number
+
 
     constructor: (@config, @plugin) ->
       @id = @config.id
@@ -53,13 +69,45 @@ module.exports = (env) ->
       @lang = @config.lang or 'DL'
       @weather = ''
 
+      @currentTemp = lastState?["currentTemp"]?.value
+      @currentWind = lastState?["currentWind"]?.value
+      @currentWindString = lastState?["currentWindString"]?.value
+      @currentWeather = lastState?["currentWeather"]?.value
+      @currentGust = lastState?["currentGust"]?.value
+
       @reloadWeather()
 
       @timerId = setInterval ( =>
         @reloadWeather()
       ), 300000
 
+
+      updateValue = =>
+        if @config.interval > 0
+          @_updateValueTimeout = null
+          @_getUpdatedLevel().finally( =>
+            @_updateValueTimeout = setTimeout(updateValue, @interval)
+          )
+
+
+      updateValue = =>
+        if @config.interval > 0
+          @_updateValueTimeout = null
+          @_getUpdatedCurrentTemp().finally( =>
+            @_getUpdatedCurrentWind().finally( =>
+              @_getUpdatedCurrentWindString().finally( =>
+                @_getUpdatedCurrentWeather().finally( =>
+                  @_getUpdatedCurrentGust().finally( =>
+                    @_updateValueTimeout = setTimeout(updateValue, @interval)
+                  )
+                )
+              )
+            )
+          )
+
+
       super()
+      updateValue()
 
     destroy: () ->
       if @timerId?
@@ -102,6 +150,57 @@ module.exports = (env) ->
     setWeather: (value) ->
       @weather = value
       @emit 'weather', value
+
+    getCurrentTemp: -> Promise.resolve(@currentTemp)
+
+    setCurrentTemp: (value) ->
+      @currentTemp = value
+      @emit 'currentTemp', value
+
+    getCurrentWind: -> Promise.resolve(@currentWind)
+
+    setCurrentWind: (value) ->
+      @currentWind = value
+      @emit 'currentWind', value
+
+    getCurrentWindString: -> Promise.resolve(@currentWindString)
+
+    setCurrentWindString: (value) ->
+      @currentWindString = value
+      @emit 'currentWindString', value
+
+    getCurrentWeather: -> Promise.resolve(@currentWeather)
+
+    setCurrentWeather: (value) ->
+      @currentWeather = value
+      @emit 'currentWeather', value
+
+    getCurrentGust: -> Promise.resolve(@currentGust)
+
+    setCurrentGust: (value) ->
+      @currentGust = value
+      @emit 'currentGust', value
+
+    _getUpdatedCurrentTemp: () =>
+      @emit "currentTemp", @currentTemp
+      return Promise.resolve @currentTemp
+
+    _getUpdatedCurrentWind: () =>
+      @emit "currentWind", @currentWind
+      return Promise.resolve @currentWind
+
+    _getUpdatedCurrentWindString: () =>
+      @emit "currentWindString", @currentWindString
+      return Promise.resolve @currentWindString
+
+    _getUpdatedCurrentWeather: () =>
+      @emit "currentWeather", @currentWeather
+      return Promise.resolve @currentWeather
+
+    _getUpdatedCurrentGust: () =>
+      @emit "currentGust", @currentGust
+      return Promise.resolve @currentGust
+
 
     detectIconClass: (icons) ->
       icon = ''
@@ -223,6 +322,13 @@ module.exports = (env) ->
           pc = pc.replace('<div id="weather_str">', '<div id="weather_str">' + weather_str)
           pc = pc.replace('<div id="temp">', '<div id="temp">' + temp)
           pc = pc.replace('<div id="hum">', '<div id="hum">' + hum)
+
+          # FILL ATTRIBUTES
+          @setCurrentTemp(parseFloat(data.current_observation.temp_c))
+          @setCurrentGust(parseFloat(data.current_observation.wind_gust_kph))
+          @setCurrentWeather(data.current_observation.weather)
+          @setCurrentWind(parseFloat(data.current_observation.wind_kph))
+          @setCurrentWindString(data.current_observation.wind_string)
 
           # HANDLE FORECAST
           if @days and @days > 1
