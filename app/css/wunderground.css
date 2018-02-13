@@ -39,10 +39,9 @@
 	padding: 10px 0 0 0;
 }
 
-#temp, #hum, .unit {
+.pimatic-wunderground #temp, .pimatic-wunderground #hum, .pimatic-wunderground  .unit {
 	float:left;
 	height: 80px;
-	/* background-color:#212121; */
 	margin-top: 10px;
 	height: 70px;
 }
