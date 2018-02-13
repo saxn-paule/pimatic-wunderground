@@ -25,10 +25,10 @@
 }
 
 .icon {
-	width:25%;
+	width:23%;
 }
 .temp, .hum, .temp_high, .temp_low {
-	width: 25%
+	width: 27%
 }
 
 .aktuell {
@@ -36,7 +36,7 @@
 }
 
 .forecast > .caption, .aktuell > .caption {
-	padding: 5px 0 0 0;
+	padding: 10px 0 0 0;
 }
 
 #temp, #hum, .unit {

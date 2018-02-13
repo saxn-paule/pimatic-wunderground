@@ -361,27 +361,32 @@ module.exports = (env) ->
                   if data
                     i = 1
                     while i <= @days
-                      day = i + 1
-                      fcStr = fcStr + '<div class="col-1">' + '<div class="icon"><i id="icon_f_' + i + '" class=""></i></div>'
-                      fcStr = fcStr + '<div class="forecast"><div class="caption' + i + '"></div><div class="forecast_str_style" id="forecast_str_' + i + '"></div></div>' + '</div>'
-                      fcStr = fcStr + '<div class="col-2">' + '<div class="icon"><i class="wi wi-thermometer"></i><i class="wi wi-direction-up"></i></div>' + '<div class="temp_high"><div class="temp-style" id="temp_high_' + i + '"></div><div class="unit">&deg;C</div></div>'
-                      fcStr = fcStr + '<div class="icon"><i class="wi wi-thermometer-exterior"></i><i class="wi wi-direction-down"></i></div>' + '<div class="temp_low"><div class="temp-style" id="temp_low_' + i + '"></div><div class="unit">&deg;C</div></div>' + '</div>'
+                      if data.forecast.simpleforecast.forecastday[i]
+                        day = i + 1
+                        fcStr = fcStr + '<div class="col-1">' + '<div class="icon"><i id="icon_f_' + i + '" class=""></i></div>'
+                        fcStr = fcStr + '<div class="forecast"><div class="caption' + i + '"></div><div class="forecast_str_style" id="forecast_str_' + i + '"></div></div>' + '</div>'
+                        fcStr = fcStr + '<div class="col-2">' + '<div class="icon"><i class="wi wi-thermometer"></i><i class="wi wi-direction-up"></i></div>' + '<div class="temp_high"><div class="temp-style" id="temp_high_' + i + '"></div><div class="unit">&deg;C</div></div>'
+                        fcStr = fcStr + '<div class="icon"><i class="wi wi-thermometer-exterior"></i><i class="wi wi-direction-down"></i></div>' + '<div class="temp_low"><div class="temp-style" id="temp_low_' + i + '"></div><div class="unit">&deg;C</div></div>' + '</div>'
+
                       i++
 
                     i = 1
                     while i <= @days
-                      weekday = data.forecast.simpleforecast.forecastday[i].date.weekday
-                      forecast_str = data.forecast.txt_forecast.forecastday[i + 1].fcttext_metric
-                      temp_high = data.forecast.simpleforecast.forecastday[i].high.celsius
-                      temp_low = data.forecast.simpleforecast.forecastday[i].low.celsius
-                      icon_f = @detectIconClass(data.forecast.txt_forecast.forecastday[i + 1].icon)
+                      if data.forecast.simpleforecast.forecastday[i]
+                        weekday = data.forecast.simpleforecast.forecastday[i].date.weekday
+                        forecast_str = data.forecast.txt_forecast.forecastday[i + 1].fcttext_metric
+                        temp_high = data.forecast.simpleforecast.forecastday[i].high.celsius
+                        temp_low = data.forecast.simpleforecast.forecastday[i].low.celsius
+                        icon_f = @detectIconClass(data.forecast.txt_forecast.forecastday[i + 1].icon)
 
+                        fcStr = fcStr.replace('icon_f_'+ i + ' class=""', 'icon_f_'+ i + ' class="' + icon_f + '"')
+                        fcStr = fcStr.replace('id="forecast_str_' + i + '">', 'id="forecast_str_' + i + '">' + forecast_str)
+                        fcStr = fcStr.replace('id="temp_high_' + i + '">', 'id="temp_high_' + i + '">' + temp_high)
+                        fcStr = fcStr.replace('id="temp_low_' + i + '">', 'id="temp_low_' + i + '">' + temp_low)
+                        fcStr = fcStr.replace('<div class="caption' + i + '">', '<div class="caption">' + weekday)
+                      else
+                        env.logger.warn 'no forecast for day ' + i + ' available'
 
-                      fcStr = fcStr.replace('icon_f_'+ i + ' class=""', 'icon_f_'+ i + ' class="' + icon_f + '"')
-                      fcStr = fcStr.replace('id="forecast_str_' + i + '">', 'id="forecast_str_' + i + '">' + forecast_str)
-                      fcStr = fcStr.replace('id="temp_high_' + i + '">', 'id="temp_high_' + i + '">' + temp_high)
-                      fcStr = fcStr.replace('id="temp_low_' + i + '">', 'id="temp_low_' + i + '">' + temp_low)
-                      fcStr = fcStr.replace('<div class="caption' + i + '">', '<div class="caption">' + weekday)
                       i++
 
                     pc = pc + fcStr
