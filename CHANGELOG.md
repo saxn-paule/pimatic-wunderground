@@ -1,3 +1,6 @@
+**version 0.0.5** *released 2018-02-16*
+* Added handling for missing API key
+
 **version 0.0.4** *released 2018-02-13*
 * CSS bugfix
 

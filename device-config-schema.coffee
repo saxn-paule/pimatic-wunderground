@@ -9,6 +9,7 @@ module.exports = {
 				description: "The apiKey"
 				type: "string"
 				default: ""
+				required: true
 			days:
 				description: "For how many days should the forecast be shown"
 				type: "string"

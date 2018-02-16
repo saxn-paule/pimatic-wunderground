@@ -1,106 +1,99 @@
 /*Custom CSS*/
 .wunderground {
-	width: 100%;
+    width: 100%;
 }
 
-.clear {
-	clear: both;
+.pimatic-wunderground .weather {
+    width: 100%;
 }
 
-.weather {
-	width: 100%;
+.pimatic-wunderground .col-1, .pimatic-wunderground .col-2 {
+    width: 100%;
+    float: left;
+    height: 80px;
+    border-bottom: 2px solid #CCCCCC;
 }
 
-.col-1, .col-2 {
-	width: 100%;
-	float:left;
-	height:  80px;
-	border-bottom: 2px solid #CCCCCC;
+.pimatic-wunderground .icon, .pimatic-wunderground .aktuell, .pimatic-wunderground .forecast, .pimatic-wunderground .hum, .pimatic-wunderground .temp {
+    height: 80px;
+    float: left;
 }
 
-.icon, .aktuell, .forecast, .hum, .temp {
-	/* background-color: #212121; */
-	height: 80px;
-	float: left;
+.pimatic-wunderground .icon {
+    width: 20%;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 40px;
+    line-height: 80px;
+    color: #007dcd;
+    float: left;
 }
 
-.icon {
-	width:23%;
-}
-.temp, .hum, .temp_high, .temp_low {
-	width: 27%
-}
-
-.aktuell {
-	width: 75%;
+.pimatic-wunderground .aktuell {
+    width: 75%;
 }
 
 .forecast > .caption, .aktuell > .caption {
-	padding: 10px 0 0 0;
+    padding: 5px 0 0 0;
 }
 
-.pimatic-wunderground #temp, .pimatic-wunderground #hum, .pimatic-wunderground  .unit {
-	float:left;
-	height: 80px;
-	margin-top: 10px;
-	height: 70px;
+.pimatic-wunderground #temp, .pimatic-wunderground #hum, .pimatic-wunderground .unit {
+    float: left;
+    height: 80px;
+    margin-top: 10px;
+    height: 70px;
 }
 
-
-.icon {
-	text-align: center;
-	vertical-align: middle;
-	/* padding: 0; */
-	font-size: 40px;
-	line-height: 80px;
-	color: #007dcd;
-	float: left;
-	width: 25%;
+.pimatic-wunderground .aktuell, .pimatic-wunderground .forecast {
+    white-space: normal;
+    width: 75%;
+    font-family: "Helvetica, Arial", sans-serif;
+    font-size: 14px;
 }
 
-.aktuell, .forecast {
-	white-space: normal;
-	width:75%;
-	font-family: "Helvetica, Arial", sans-serif;
-	font-size: 14px;
+.pimatic-wunderground .forecast_str_style {
+    font-family: "Oswald", sans-serif;
+    font-size: 12px;
+    float: left;
+    margin-top: 3px;
 }
 
-.forecast_str_style {
-	/* background-color:#212121; */
-	font-family: "Oswald", sans-serif;
-	font-size: 12px;
-	float:left;
-	margin-top: 5px;
+.pimatic-wunderground #temp_high, .pimatic-wunderground #temp_low {
+    width: 25%;
+    float: left;
 }
 
-#temp_high, #temp_low {
-	width: 25%;
-	/* background-color:#212121; */
-	float: left;
+.pimatic-wunderground .temp-style {
+    height: 70px;
+    /* background-color:#212121; */
+    font-family: "Oswald", sans-serif;
+    font-size: 34px;
+    float: left;
+    margin-top: 10px;
 }
 
-.temp-style {
-	height: 70px;
-	/* background-color:#212121; */
-	font-family: "Oswald", sans-serif;
-	font-size: 34px;
-	float: left;
-	margin-top: 10px;
+.pimatic-wunderground #weather_str {
+    font-family: "Oswald", sans-serif;
+    font-size: 20px;
 }
 
-#weather_str {
-	font-family: "Oswald", sans-serif;
-	font-size: 20px;
+.pimatic-wunderground #forecast_str {
+    font-family: "Oswald", sans-serif;
+    font-size: 12px;
 }
-#forecast_str {
-	font-family: "Oswald", sans-serif;
-	font-size: 12px;
+
+.pimatic-wunderground .temp, .pimatic-wunderground .hum, .pimatic-wunderground .temp_high, .pimatic-wunderground .temp_low {
+    width: 30%
+    font-family: "Oswald", sans-serif;
+    font-size: 30px;
+    float: left;
+    width: 30%;
 }
-.temp, .hum, .temp_high, .temp_low {
-	font-family: "Oswald", sans-serif;
-	font-size: 34px;
-	float: left;
-	width: 25%;
-	/* background-color: #212121; */
+
+.space {
+    height: 4px;
 }
-.space {height: 4px;}
+
+.clear {
+    clear: both;
+}

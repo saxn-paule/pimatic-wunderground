@@ -294,7 +294,7 @@ module.exports = (env) ->
             @setWeather(placeholder)
             return
 
-        if data
+        if data and data.current_observation
           pc = ''
           pc = pc + '<div class="col-1">'
           pc = pc + ' <div class="icon"><i id="icon" class=""></i></div>'
@@ -394,6 +394,12 @@ module.exports = (env) ->
                     @setWeather(pc)
           else
             @setWeather(pc)
+
+        else
+          if data and data.response and data.response.error
+            @setWeather("<div class=\"wunderground\">" + data.response.error.description + "</div>")
+          else
+            @setWeather("<div class=\"wunderground\">Error on parsing server response.</div>")
 
 
     destroy: ->
