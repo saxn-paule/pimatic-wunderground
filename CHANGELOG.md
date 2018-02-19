@@ -1,3 +1,6 @@
+**version 0.0.6** *released 2018-02-19*
+* Added interval config parameter
+
 **version 0.0.5** *released 2018-02-16*
 * Added handling for missing API key
 

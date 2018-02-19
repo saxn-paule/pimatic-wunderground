@@ -67,6 +67,7 @@ module.exports = (env) ->
       @city = @config.city
       @days = @config.days
       @lang = @config.lang or 'DL'
+      @interval = @config.interval or 30
       @weather = ''
 
       @currentTemp = lastState?["currentTemp"]?.value
@@ -79,16 +80,7 @@ module.exports = (env) ->
 
       @timerId = setInterval ( =>
         @reloadWeather()
-      ), 300000
-
-
-      updateValue = =>
-        if @config.interval > 0
-          @_updateValueTimeout = null
-          @_getUpdatedLevel().finally( =>
-            @_updateValueTimeout = setTimeout(updateValue, @interval)
-          )
-
+      ), (@interval * 1000 * 60)
 
       updateValue = =>
         if @config.interval > 0
@@ -98,7 +90,7 @@ module.exports = (env) ->
               @_getUpdatedCurrentWindString().finally( =>
                 @_getUpdatedCurrentWeather().finally( =>
                   @_getUpdatedCurrentGust().finally( =>
-                    @_updateValueTimeout = setTimeout(updateValue, @interval)
+                    @_updateValueTimeout = setTimeout(updateValue, 300000)
                   )
                 )
               )
@@ -266,6 +258,7 @@ module.exports = (env) ->
       return icon
 
     reloadWeather: ->
+      env.logger.info "Reloading weather data..."
       url = actualUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
       if @state? and @state.length > 0
         url = url.replace('{state}', @state + '/')

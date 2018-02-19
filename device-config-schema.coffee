@@ -30,5 +30,9 @@ module.exports = {
 				description: "The language"
 				type: "string"
 				default: "DL"
+			interval:
+				description: "Update interval in minutes"
+				type: "number"
+				default: 30
 	}
 }

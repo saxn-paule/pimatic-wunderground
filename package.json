@@ -10,7 +10,7 @@
 	"device-config-schema.coffee",
     "app"
   ],
-  "version": "0.0.5",
+  "version": "0.0.6",
   "repository": {
     "type": "git",
     "url": "git://github.com/saxn-paule/pimatic-wunderground.git"
