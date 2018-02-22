@@ -351,7 +351,7 @@ module.exports = (env) ->
                       env.logger.warn err
                       fcStr = "<div class=\"wunderground\">Error on parsing server response.</div>"
 
-                  if data
+                  if data and data.forecast and data.forecast.simpleforecast
                     i = 1
                     while i <= @days
                       if data.forecast.simpleforecast.forecastday[i]
@@ -385,6 +385,13 @@ module.exports = (env) ->
                     pc = pc + fcStr
 
                     @setWeather(pc)
+
+                  else
+                    @setWeather(pc)
+
+                    if @days > 0
+                      env.logger.warn "no forecast available"
+
           else
             @setWeather(pc)
 

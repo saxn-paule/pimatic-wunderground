@@ -1,3 +1,6 @@
+**version 0.0.7** *released 2018-02-22*
+* Handled missing forecast error
+
 **version 0.0.6** *released 2018-02-19*
 * Added interval config parameter
 

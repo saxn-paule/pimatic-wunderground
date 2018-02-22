@@ -10,7 +10,7 @@
 	"device-config-schema.coffee",
     "app"
   ],
-  "version": "0.0.6",
+  "version": "0.0.7",
   "repository": {
     "type": "git",
     "url": "git://github.com/saxn-paule/pimatic-wunderground.git"
@@ -20,7 +20,7 @@
   },
   "configSchema": "wunderground-config-schema.coffee",
   "dependencies": {
-    "request": "latest"
+    "request": "2.83.0"
   },
   "peerDependencies": {
     "pimatic": "0.9.*"
