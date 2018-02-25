@@ -1,3 +1,6 @@
+**version 0.0.8** *released 2018-02-25*
+* Added support for private weather stations (pws)
+
 **version 0.0.7** *released 2018-02-22*
 * Handled missing forecast error
 

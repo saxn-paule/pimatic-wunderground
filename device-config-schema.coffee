@@ -26,6 +26,10 @@ module.exports = {
 				description: "The city"
 				type: "string"
 				default: ""
+			pws:
+				description: "ID of private weather station"
+				type: "string"
+				default: ""
 			lang:
 				description: "The language"
 				type: "string"

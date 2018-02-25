@@ -6,7 +6,9 @@ module.exports = (env) ->
   t = env.require('decl-api').types
   Request = require 'request'
   actualUrl = "http://api.wunderground.com/api/{apiKey}/conditions/lang:{lang}/q/{country}/{state}{city}.json";
+  actualPwsUrl = "http://api.wunderground.com/api/{apiKey}/conditions/lang:{lang}/q/pws:{pws}.json";
   forecastUrl = "http://api.wunderground.com/api/{apiKey}/forecast/lang:{lang}/q/{country}/{state}{city}.json";
+  forecastPwsUrl = "http://api.wunderground.com/api/{apiKey}/forecast/lang:{lang}/q/pws:{pws}.json";
 
   class WundergroundPlugin extends env.plugins.Plugin
 
@@ -66,6 +68,7 @@ module.exports = (env) ->
       @state = @config.state
       @city = @config.city
       @days = @config.days
+      @pws = @config.pws
       @lang = @config.lang or 'DL'
       @interval = @config.interval or 30
       @weather = ''
@@ -136,6 +139,12 @@ module.exports = (env) ->
     setCity: (value) ->
       if @city is value then return
       @city = value
+
+    getPws: -> Promise.resolve(@pws)
+
+    setPws: (value) ->
+      if @pws is value then return
+      @pws = value
 
     getWeather: -> Promise.resolve(@weather)
 
@@ -259,11 +268,15 @@ module.exports = (env) ->
 
     reloadWeather: ->
       env.logger.info "Reloading weather data..."
-      url = actualUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
-      if @state? and @state.length > 0
-        url = url.replace('{state}', @state + '/')
+      if @pws? and @pws.length > 0
+        url = actualPwsUrl.replace('{apiKey}', @apiKey).replace('{pws}', @pws).replace('{lang}', @lang)
       else
-        url = url.replace('{state}', '')
+        url = actualUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
+
+        if @state? and @state.length > 0
+          url = url.replace('{state}', @state + '/')
+        else
+          url = url.replace('{state}', '')
 
       Request.get url, (error, response, body) =>
         if error
@@ -324,73 +337,76 @@ module.exports = (env) ->
           @setCurrentWindString(data.current_observation.wind_string)
 
           # HANDLE FORECAST
-          if @days and @days > 1
+          if @days and @days > 0
             fcStr = ''
 
-            url = forecastUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
-            if @state? and @state.length > 0
-              url = url.replace('{state}', @state + '/')
+            if @pws? and @pws.length > 0
+              url = forecastPwsUrl.replace('{apiKey}', @apiKey).replace('{pws}', @pws).replace('{lang}', @lang)
             else
-              url = url.replace('{state}', '')
+              url = forecastUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
+              if @state? and @state.length > 0
+                url = url.replace('{state}', @state + '/')
+              else
+                url = url.replace('{state}', '')
 
-              Request.get url, (error, response, body) =>
-                if error
-                  if error.code is "ENOTFOUND"
-                    env.logger.warn "Cannot connect to :" + url
-                    fcStr = "<div class=\"wunderground\">Server not reachable at the moment.</div>"
-                  else
-                    env.logger.error error
+            Request.get url, (error, response, body) =>
+              if error
+                if error.code is "ENOTFOUND"
+                  env.logger.warn "Cannot connect to :" + url
+                  fcStr = "<div class=\"wunderground\">Server not reachable at the moment.</div>"
+                else
+                  env.logger.error error
+
+              else
+                if typeof body == 'object'
+                  data = body
+                else
+                  try
+                    data = JSON.parse(body)
+                  catch err
+                    env.logger.warn err
+                    fcStr = "<div class=\"wunderground\">Error on parsing server response.</div>"
+
+                if data and data.forecast and data.forecast.simpleforecast
+                  i = 1
+                  while i <= @days
+                    if data.forecast.simpleforecast.forecastday[i]
+                      day = i + 1
+                      fcStr = fcStr + '<div class="col-1">' + '<div class="icon"><i id="icon_f_' + i + '" class=""></i></div>'
+                      fcStr = fcStr + '<div class="forecast"><div class="caption' + i + '"></div><div class="forecast_str_style" id="forecast_str_' + i + '"></div></div>' + '</div>'
+                      fcStr = fcStr + '<div class="col-2">' + '<div class="icon"><i class="wi wi-thermometer"></i><i class="wi wi-direction-up"></i></div>' + '<div class="temp_high"><div class="temp-style" id="temp_high_' + i + '"></div><div class="unit">&deg;C</div></div>'
+                      fcStr = fcStr + '<div class="icon"><i class="wi wi-thermometer-exterior"></i><i class="wi wi-direction-down"></i></div>' + '<div class="temp_low"><div class="temp-style" id="temp_low_' + i + '"></div><div class="unit">&deg;C</div></div>' + '</div>'
+
+                    i++
+
+                  i = 1
+                  while i <= @days
+                    if data.forecast.simpleforecast.forecastday[i]
+                      weekday = data.forecast.simpleforecast.forecastday[i].date.weekday
+                      forecast_str = data.forecast.txt_forecast.forecastday[i + 1].fcttext_metric
+                      temp_high = data.forecast.simpleforecast.forecastday[i].high.celsius
+                      temp_low = data.forecast.simpleforecast.forecastday[i].low.celsius
+                      icon_f = @detectIconClass(data.forecast.txt_forecast.forecastday[i + 1].icon)
+
+                      fcStr = fcStr.replace('icon_f_'+ i + ' class=""', 'icon_f_'+ i + ' class="' + icon_f + '"')
+                      fcStr = fcStr.replace('id="forecast_str_' + i + '">', 'id="forecast_str_' + i + '">' + forecast_str)
+                      fcStr = fcStr.replace('id="temp_high_' + i + '">', 'id="temp_high_' + i + '">' + temp_high)
+                      fcStr = fcStr.replace('id="temp_low_' + i + '">', 'id="temp_low_' + i + '">' + temp_low)
+                      fcStr = fcStr.replace('<div class="caption' + i + '">', '<div class="caption">' + weekday)
+                    else
+                      env.logger.warn 'no forecast for day ' + i + ' available'
+
+                    i++
+
+                  pc = pc + fcStr
+
+                  @setWeather(pc)
 
                 else
-                  if typeof body == 'object'
-                    data = body
-                  else
-                    try
-                      data = JSON.parse(body)
-                    catch err
-                      env.logger.warn err
-                      fcStr = "<div class=\"wunderground\">Error on parsing server response.</div>"
+                  @setWeather(pc)
 
-                  if data and data.forecast and data.forecast.simpleforecast
-                    i = 1
-                    while i <= @days
-                      if data.forecast.simpleforecast.forecastday[i]
-                        day = i + 1
-                        fcStr = fcStr + '<div class="col-1">' + '<div class="icon"><i id="icon_f_' + i + '" class=""></i></div>'
-                        fcStr = fcStr + '<div class="forecast"><div class="caption' + i + '"></div><div class="forecast_str_style" id="forecast_str_' + i + '"></div></div>' + '</div>'
-                        fcStr = fcStr + '<div class="col-2">' + '<div class="icon"><i class="wi wi-thermometer"></i><i class="wi wi-direction-up"></i></div>' + '<div class="temp_high"><div class="temp-style" id="temp_high_' + i + '"></div><div class="unit">&deg;C</div></div>'
-                        fcStr = fcStr + '<div class="icon"><i class="wi wi-thermometer-exterior"></i><i class="wi wi-direction-down"></i></div>' + '<div class="temp_low"><div class="temp-style" id="temp_low_' + i + '"></div><div class="unit">&deg;C</div></div>' + '</div>'
-
-                      i++
-
-                    i = 1
-                    while i <= @days
-                      if data.forecast.simpleforecast.forecastday[i]
-                        weekday = data.forecast.simpleforecast.forecastday[i].date.weekday
-                        forecast_str = data.forecast.txt_forecast.forecastday[i + 1].fcttext_metric
-                        temp_high = data.forecast.simpleforecast.forecastday[i].high.celsius
-                        temp_low = data.forecast.simpleforecast.forecastday[i].low.celsius
-                        icon_f = @detectIconClass(data.forecast.txt_forecast.forecastday[i + 1].icon)
-
-                        fcStr = fcStr.replace('icon_f_'+ i + ' class=""', 'icon_f_'+ i + ' class="' + icon_f + '"')
-                        fcStr = fcStr.replace('id="forecast_str_' + i + '">', 'id="forecast_str_' + i + '">' + forecast_str)
-                        fcStr = fcStr.replace('id="temp_high_' + i + '">', 'id="temp_high_' + i + '">' + temp_high)
-                        fcStr = fcStr.replace('id="temp_low_' + i + '">', 'id="temp_low_' + i + '">' + temp_low)
-                        fcStr = fcStr.replace('<div class="caption' + i + '">', '<div class="caption">' + weekday)
-                      else
-                        env.logger.warn 'no forecast for day ' + i + ' available'
-
-                      i++
-
-                    pc = pc + fcStr
-
-                    @setWeather(pc)
-
-                  else
-                    @setWeather(pc)
-
-                    if @days > 0
-                      env.logger.warn "no forecast available"
+                  if @days > 0
+                    env.logger.warn "no forecast available"
 
           else
             @setWeather(pc)
