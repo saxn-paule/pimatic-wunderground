@@ -1,3 +1,6 @@
+**version 0.0.9** *released 2018-03-01*
+* Provided wind direction as a variable (currentWindDir)
+
 **version 0.0.8** *released 2018-02-25*
 * Added support for private weather stations (pws)
 

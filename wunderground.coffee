@@ -49,6 +49,9 @@ module.exports = (env) ->
       currentWind:
         description: 'the current wind speed in km/h'
         type: t.number
+      currentWindDir:
+        description: 'the current wind speed in km/h'
+        type: t.string
       currentWindString:
         description: 'the current wind description'
         type: t.string
@@ -76,6 +79,7 @@ module.exports = (env) ->
       @currentTemp = lastState?["currentTemp"]?.value
       @currentWind = lastState?["currentWind"]?.value
       @currentWindString = lastState?["currentWindString"]?.value
+      @currentWindDir = lastState?["currentWindDir"]?.value
       @currentWeather = lastState?["currentWeather"]?.value
       @currentGust = lastState?["currentGust"]?.value
 
@@ -90,10 +94,12 @@ module.exports = (env) ->
           @_updateValueTimeout = null
           @_getUpdatedCurrentTemp().finally( =>
             @_getUpdatedCurrentWind().finally( =>
-              @_getUpdatedCurrentWindString().finally( =>
-                @_getUpdatedCurrentWeather().finally( =>
-                  @_getUpdatedCurrentGust().finally( =>
-                    @_updateValueTimeout = setTimeout(updateValue, 300000)
+              @_getUpdatedCurrentWindDir().finally( =>
+                @_getUpdatedCurrentWindString().finally( =>
+                  @_getUpdatedCurrentWeather().finally( =>
+                    @_getUpdatedCurrentGust().finally( =>
+                      @_updateValueTimeout = setTimeout(updateValue, 300000)
+                    )
                   )
                 )
               )
@@ -164,6 +170,12 @@ module.exports = (env) ->
       @currentWind = value
       @emit 'currentWind', value
 
+    getCurrentWindDir: -> Promise.resolve(@currentWindDir)
+
+    setCurrentWindDir: (value) ->
+      @currentWindDir = value
+      @emit 'currentWindDir', value
+
     getCurrentWindString: -> Promise.resolve(@currentWindString)
 
     setCurrentWindString: (value) ->
@@ -189,6 +201,10 @@ module.exports = (env) ->
     _getUpdatedCurrentWind: () =>
       @emit "currentWind", @currentWind
       return Promise.resolve @currentWind
+
+    _getUpdatedCurrentWindDir: () =>
+      @emit "currentWindDir", @currentWindDir
+      return Promise.resolve @currentWindDir
 
     _getUpdatedCurrentWindString: () =>
       @emit "currentWindString", @currentWindString
@@ -335,6 +351,7 @@ module.exports = (env) ->
           @setCurrentWeather(data.current_observation.weather)
           @setCurrentWind(parseFloat(data.current_observation.wind_kph))
           @setCurrentWindString(data.current_observation.wind_string)
+          @setCurrentWindDir(data.current_observation.wind_dir)
 
           # HANDLE FORECAST
           if @days and @days > 0
