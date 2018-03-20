@@ -6,6 +6,7 @@ module.exports = (env) ->
   t = env.require('decl-api').types
   Request = require 'request'
   actualUrl = "http://api.wunderground.com/api/{apiKey}/conditions/lang:{lang}/q/{country}/{state}{city}.json";
+  historyUrl = "http://api.wunderground.com/api/{apiKey}/history_{historyDate}/lang:{lang}/q/{country}/{state}{city}.json";
   actualPwsUrl = "http://api.wunderground.com/api/{apiKey}/conditions/lang:{lang}/q/pws:{pws}.json";
   forecastUrl = "http://api.wunderground.com/api/{apiKey}/forecast/lang:{lang}/q/{country}/{state}{city}.json";
   forecastPwsUrl = "http://api.wunderground.com/api/{apiKey}/forecast/lang:{lang}/q/pws:{pws}.json";
@@ -18,6 +19,11 @@ module.exports = (env) ->
       @framework.deviceManager.registerDeviceClass("WundergroundDevice",{
         configDef : deviceConfigDef.WundergroundDevice,
         createCallback : (config) => new WundergroundDevice(config,this)
+      })
+
+      @framework.deviceManager.registerDeviceClass("WundergroundHistoryDevice",{
+        configDef : deviceConfigDef.WundergroundHistoryDevice,
+        createCallback : (config) => new WundergroundHistoryDevice(config,this)
       })
 
       @framework.on "after init", =>
@@ -438,6 +444,236 @@ module.exports = (env) ->
     destroy: ->
       super()
 
+  class WundergroundHistoryDevice extends env.devices.Device
+    template: 'wunderground'
+
+    attributes:
+      rain:
+        description: 'rain in mm'
+        type: t.string
+      temperature:
+        description: 'the past temperature in °C'
+        type: t.number
+      humidity:
+        description: 'the past humidity in %'
+        type: t.number
+
+    constructor: (@config, @plugin) ->
+      @id = @config.id
+      @name = @config.name
+      @apiKey = @config.apiKey
+      @country = @config.country
+      @state = @config.state
+      @city = @config.city
+      @dayOffset = @config.dayOffset
+      @timeOffset = @config.timeOffset
+      @lang = @config.lang or 'DL'
+      @interval = @config.interval or 30
+
+      @rain = lastState?["rain"]?.value
+      @temperature = lastState?["temperature"]?.value
+      @humidity = lastState?["humidity"]?.value
+
+      @reloadHistoryWeather()
+
+      @timerId = setInterval ( =>
+        @reloadHistoryWeather()
+      ), (@interval * 1000 * 60)
+
+      updateValues = =>
+        if @config.interval > 0
+          @_updateValueTimeout = null
+          @_getUpdatedPastTemperature().finally( =>
+            @_getUpdatedPastHumidity().finally( =>
+              @_getUpdatedPastRain().finally( =>
+                @_updateValueTimeout = setTimeout(updateValues, 300000)
+              )
+            )
+          )
+
+
+      super()
+      updateValues()
+
+    destroy: () ->
+      if @timerId?
+        clearInterval @timerId
+        @timerId = null
+      super()
+
+    getApiKey: -> Promise.resolve(@apiKey)
+
+    setApiKey: (value) ->
+      if @apiKey is value then return
+      @apiKey = value
+
+    getDayOffset: -> Promise.resolve(@dayOffset)
+
+    setDayOffset: (value) ->
+      if @days is value then return
+      @dayOffset = value
+
+    getCountry: -> Promise.resolve(@country)
+
+    setCountry: (value) ->
+      if @country is value then return
+      @country = value
+
+    getState: -> Promise.resolve(@state)
+
+    setState: (value) ->
+      if @state is value then return
+      @state = value
+
+    getCity: -> Promise.resolve(@city)
+
+    setCity: (value) ->
+      if @city is value then return
+      @city = value
+
+    getTemperature: -> Promise.resolve(@temperature)
+
+    setTemperature: (value) ->
+      @temperature = value
+      @emit 'temperature', value
+
+    getHumidity: -> Promise.resolve(@humidity)
+
+    setHumidity: (value) ->
+      @humidity = value
+      @emit 'humidity', value
+
+    getRain: -> Promise.resolve(@rain)
+
+    setRain: (value) ->
+      @rain = value
+      @emit 'rain', value
+
+    _getUpdatedPastTemperature: () =>
+      @emit "temperature", @temperature
+      return Promise.resolve @temperature
+
+    _getUpdatedPastHumidity: () =>
+      @emit "humidity", @humidity
+      return Promise.resolve @humidity
+
+    _getUpdatedPastRain: () =>
+      @emit "rain", @rain
+      return Promise.resolve @rain
+
+    reloadHistoryWeather: ->
+      env.logger.info "Reloading history weather data..."
+
+      url = historyUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
+
+      if @state? and @state.length > 0
+        url = url.replace('{state}', @state + '/')
+      else
+        url = url.replace('{state}', '')
+
+      # date date to request
+      now = new Date().getTime()
+
+      if @timeOffset < 0
+        offsetHours = @timeOffset * 60 * 60 * 1000
+      else
+        offsetHours = 0
+
+      if @dayOffset < 0
+        offsetDays = @dayOffset * 24 * 60 * 60 * 1000
+      else
+        offsetDays = 0
+
+      past = new Date(now + offsetDays + offsetHours)
+
+      env.logger.info "Past: " + past
+
+      pastYear = past.getUTCFullYear()
+
+      pastMonth = past.getUTCMonth() + 1
+      if pastMonth.length < 2
+        pastMonth = "0" + pastMonth;
+
+      pastDay = past.getUTCDate()
+      if pastDay.length < 2
+        pastDay = "0" + pastDay;
+
+      url = url.replace('{historyDate}', "" + pastYear + pastMonth + pastDay)
+
+      env.logger.info "Requesting url: " + url
+
+      Request.get url, (error, response, body) =>
+        if error
+          if error.code is "ENOTFOUND"
+            env.logger.warn "Cannot connect to :" + url
+          else
+            env.logger.error error
+
+          return
+
+        if typeof body == 'object'
+          data = body
+        else
+          try
+            data = JSON.parse(body)
+          catch err
+            env.logger.warn err
+            return
+
+        if data and data.history.observations
+          observations = data.history.observations
+
+          pastYear = past.getUTCFullYear()
+          pastMonth = past.getUTCMonth() + 1
+          pastDay = past.getUTCDate()
+          pastHour = past.getUTCHours()
+
+          i = 0
+          match = 0
+          diffYear = 100
+          diffMonth = 100
+          diffDay = 100
+          diffHour = 100
+
+          # Find the matching entry by smallest difference to given date
+          while i < observations.length
+            observationEntry = observations[i]
+
+            env.logger.info JSON.stringify(observationEntry)
+
+            obDate = observationEntry.utcdate
+
+            tempYear = Math.abs(obDate.year - pastYear)
+            tempMonth = Math.abs(obDate.mon - pastMonth)
+            tempDay = Math.abs(obDate.mday - pastDay)
+            tempHour = Math.abs(obDate.hour - pastHour)
+
+            if tempYear < diffYear
+              diffYear = tempYear
+              if tempMonth < diffMonth
+                diffMonth = tempMonth
+                if tempDay < diffDay
+                  diffDay = tempDay
+                  if tempHour < diffHour
+                    diffHour = tempHour
+                    match = i
+
+            i++
+
+          # FILL ATTRIBUTES
+          @setTemperature(parseFloat(observations[match].tempm))
+          @setHumidity(parseFloat(observations[match].hum))
+          @setRain(parseInt(observations[match].rain))
+
+        else
+          if data and data.response and data.response.error
+            env.logger.warn data.response.error.description
+          else
+            env.logger.warn "Error on parsing server response."
+
+
+    destroy: ->
+      super()
 
   wundergroundPlugin = new WundergroundPlugin
   return wundergroundPlugin
