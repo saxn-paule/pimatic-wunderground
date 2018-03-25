@@ -67,7 +67,12 @@ module.exports = (env) ->
       currentGust:
         description: 'the current gust speed in km/h'
         type: t.number
-
+      dewPoint:
+        description: 'the current dewpoint in °C'
+        type: t.number
+      heatIndex:
+        description: 'the current heatindex in °C'
+        type: t.number
 
     constructor: (@config, @plugin) ->
       @id = @config.id
@@ -88,6 +93,8 @@ module.exports = (env) ->
       @currentWindDir = lastState?["currentWindDir"]?.value
       @currentWeather = lastState?["currentWeather"]?.value
       @currentGust = lastState?["currentGust"]?.value
+      @heatIndex = lastState?["heatIndex"]?.value
+      @dewPoint = lastState?["dewPoint"]?.value
 
       @reloadWeather()
 
@@ -104,7 +111,11 @@ module.exports = (env) ->
                 @_getUpdatedCurrentWindString().finally( =>
                   @_getUpdatedCurrentWeather().finally( =>
                     @_getUpdatedCurrentGust().finally( =>
-                      @_updateValueTimeout = setTimeout(updateValue, 300000)
+                      @_getUpdatedHeatIndex().finally( =>
+                        @_getUpdatedDewPoint().finally( =>
+                          @_updateValueTimeout = setTimeout(updateValue, 300000)
+                        )
+                      )
                     )
                   )
                 )
@@ -200,6 +211,18 @@ module.exports = (env) ->
       @currentGust = value
       @emit 'currentGust', value
 
+    getHeatIndex: -> Promise.resolve(@heatIndex)
+
+    setHeatIndex: (value) ->
+      @heatIndex = value
+      @emit 'heatIndex', value
+
+    getDewPoint: -> Promise.resolve(@dewPoint)
+
+    setDewPoint: (value) ->
+      @dewPoint = value
+      @emit 'dewPoint', value
+
     _getUpdatedCurrentTemp: () =>
       @emit "currentTemp", @currentTemp
       return Promise.resolve @currentTemp
@@ -224,6 +247,13 @@ module.exports = (env) ->
       @emit "currentGust", @currentGust
       return Promise.resolve @currentGust
 
+    _getUpdatedHeatIndex: () =>
+      @emit "heatIndex", @heatIndex
+      return Promise.resolve @heatIndex
+
+    _getUpdatedDewPoint: () =>
+      @emit "dewPoint", @dewPoint
+      return Promise.resolve @dewPoint
 
     detectIconClass: (icons) ->
       icon = ''
@@ -358,6 +388,12 @@ module.exports = (env) ->
           @setCurrentWind(parseFloat(data.current_observation.wind_kph))
           @setCurrentWindString(data.current_observation.wind_string)
           @setCurrentWindDir(data.current_observation.wind_dir)
+          @setDewPoint(data.current_observation.dewpoint_c)
+
+          if data.current_observation.heat_index_c? and typeof data.current_observation.heat_index_c is 'number'
+            @setHeatIndex(data.current_observation.heat_index_c)
+          else
+            @setHeatIndex(-1)
 
           # HANDLE FORECAST
           if @days and @days > 0
@@ -675,5 +711,4 @@ module.exports = (env) ->
     destroy: ->
       super()
 
-  wundergroundPlugin = new WundergroundPlugin
-  return wundergroundPlugin
+  return new WundergroundPlugin

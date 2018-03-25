@@ -10,13 +10,21 @@ As long there is no solution for using custom fonts in plugins, please copy the 
 
 ```
 
-The WundergroundDevice provides five variables
+The WundergroundDevice provides the following variables
 * **currentTemp:** the current temperature in °C
 * **currentWind:** the current wind speed in km/h
 * **currentWindString:** the current wind description
+* **currentWindDir:** the current wind speed in km/h
 * **currentWeather:** the current weather description
 * **currentGust:** the current gust speed in km/h
+* **dewPoint:** the current dewpoint in °C
+* **heatIndex:** the current heatindex in °C
+        
 
+The WundergroundHistoryDevice provides the following variables
+* **rain:** rain in mm
+* **temperature:** the past temperature in °C
+* **humidity:** the past humidity in %
 
 # Beware
 This plugin is in an early alpha stadium and you use it on your own risk.

@@ -1,3 +1,7 @@
+**version 0.1.0** *released 2018-03-25*
+* Provided heatindex as a variable
+* Provided dewpoint as a variable
+
 **version 0.0.9** *released 2018-03-01*
 * Provided wind direction as a variable (currentWindDir)
 
