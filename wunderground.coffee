@@ -481,8 +481,6 @@ module.exports = (env) ->
       super()
 
   class WundergroundHistoryDevice extends env.devices.Device
-    template: 'wunderground'
-
     attributes:
       rain:
         description: 'rain in mm'
@@ -495,6 +493,36 @@ module.exports = (env) ->
         type: t.number
 
     constructor: (@config, @plugin) ->
+      numericAttributes = ['rain', 'temperature', 'humidity']
+      xAttributeOptions = @config.xAttributeOptions
+
+      keys = []
+      for i in xAttributeOptions
+        keys.push(i.name)
+
+      # set displaySparkline to false initially
+      for attr in numericAttributes
+        if attr not in keys
+          xAttributeOptions.push(
+            {
+              name: attr,
+              displaySparkline: false
+            }
+          )
+
+      @config.xAttributeOptions = xAttributeOptions
+
+      # provide possibility to add labels
+      for attribute in @config.attributes
+        do (attribute) =>
+          label = attribute.name.replace /(^[a-z])|([A-Z])/g, ((match, p1, p2, offset) =>
+            (if offset > 0 then " " else "") + match.toUpperCase())
+          @attributes[attribute.name] =
+            description: label
+            type: "number"
+            acronym: attribute.label ? label
+            unit: attribute.unit ? ""
+
       @id = @config.id
       @name = @config.name
       @apiKey = @config.apiKey
@@ -505,6 +533,7 @@ module.exports = (env) ->
       @timeOffset = @config.timeOffset
       @lang = @config.lang or 'DL'
       @interval = @config.interval or 30
+      @weather = ''
 
       @rain = lastState?["rain"]?.value
       @temperature = lastState?["temperature"]?.value
@@ -528,7 +557,7 @@ module.exports = (env) ->
           )
 
 
-      super()
+      super(@config)
       updateValues()
 
     destroy: () ->
@@ -622,8 +651,6 @@ module.exports = (env) ->
 
       past = new Date(now + offsetDays + offsetHours)
 
-      env.logger.info "Past: " + past
-
       pastYear = past.getUTCFullYear()
 
       pastMonth = past.getUTCMonth() + 1
@@ -656,7 +683,7 @@ module.exports = (env) ->
             env.logger.warn err
             return
 
-        if data and data.history.observations
+        if data and data.history and data.history.observations
           observations = data.history.observations
 
           pastYear = past.getUTCFullYear()
@@ -674,8 +701,6 @@ module.exports = (env) ->
           # Find the matching entry by smallest difference to given date
           while i < observations.length
             observationEntry = observations[i]
-
-            env.logger.info JSON.stringify(observationEntry)
 
             obDate = observationEntry.utcdate
 

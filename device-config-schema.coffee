@@ -42,7 +42,7 @@ module.exports = {
 	WundergroundHistoryDevice :{
 		title: "WundergroundHistoryDevice Properties"
 		type: "object"
-		extensions: ["xLink"]
+		extensions: ["xLink", "xAttributeOptions"]
 		properties:
 			apiKey:
 				description: "The apiKey"
@@ -77,5 +77,26 @@ module.exports = {
 				description: "How many hours in the past."
 				type: "number"
 				default: -7
+			attributes:
+				description: "Attributes which shall be exposed by the device"
+				type: "array"
+				default: []
+				format: "table"
+				items:
+					type: "object"
+					properties:
+						name:
+							enum: [
+								"rain", "temperature", "humidity"
+							]
+							description: "weather related attributes"
+						label:
+							type: "string"
+							description: "The attribute label text to be displayed. The name will be displayed if not set"
+							required: false
+						unit:
+							description: "The unit of the variable. Only works if type is a number."
+							type: "string"
+							required: false
 	}
 }

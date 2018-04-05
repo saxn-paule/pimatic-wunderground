@@ -1,3 +1,6 @@
+**version 0.2.0** *released 2018-04-05*
+* provided frontend representation for WundergroundHistoryDevice including options for label and unit
+
 **version 0.1.0** *released 2018-03-25*
 * Provided heatindex as a variable
 * Provided dewpoint as a variable
