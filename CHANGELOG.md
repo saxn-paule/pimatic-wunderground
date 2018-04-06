@@ -1,3 +1,7 @@
+**version 0.2.1** *released 2018-04-06*
+* fixed calculation of correct historical observation entry
+* refactoring
+
 **version 0.2.0** *released 2018-04-05*
 * provided frontend representation for WundergroundHistoryDevice including options for label and unit
 

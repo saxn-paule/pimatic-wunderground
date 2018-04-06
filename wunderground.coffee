@@ -22,6 +22,7 @@ module.exports = (env) ->
       })
 
       @framework.deviceManager.registerDeviceClass("WundergroundHistoryDevice",{
+        prepareConfig: WundergroundHistoryDevice.prepareConfig,
         configDef : deviceConfigDef.WundergroundHistoryDevice,
         createCallback : (config) => new WundergroundHistoryDevice(config,this)
       })
@@ -75,6 +76,12 @@ module.exports = (env) ->
         type: t.number
 
     constructor: (@config, @plugin) ->
+      # create getter function for attributes
+      for attributeName of @attributes
+        @_createGetter(attributeName, =>
+          @initialized.then => Promise.resolve @[attributeName]
+        )
+
       @id = @config.id
       @name = @config.name
       @apiKey = @config.apiKey
@@ -96,36 +103,15 @@ module.exports = (env) ->
       @heatIndex = lastState?["heatIndex"]?.value
       @dewPoint = lastState?["dewPoint"]?.value
 
-      @reloadWeather()
+      @initialized = new Promise (resolve) =>
+        @_reloadWeather()
+        resolve()
 
       @timerId = setInterval ( =>
-        @reloadWeather()
+        @_reloadWeather()
       ), (@interval * 1000 * 60)
 
-      updateValue = =>
-        if @config.interval > 0
-          @_updateValueTimeout = null
-          @_getUpdatedCurrentTemp().finally( =>
-            @_getUpdatedCurrentWind().finally( =>
-              @_getUpdatedCurrentWindDir().finally( =>
-                @_getUpdatedCurrentWindString().finally( =>
-                  @_getUpdatedCurrentWeather().finally( =>
-                    @_getUpdatedCurrentGust().finally( =>
-                      @_getUpdatedHeatIndex().finally( =>
-                        @_getUpdatedDewPoint().finally( =>
-                          @_updateValueTimeout = setTimeout(updateValue, 300000)
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          )
-
-
-      super()
-      updateValue()
+      super(@config)
 
     destroy: () ->
       if @timerId?
@@ -133,127 +119,9 @@ module.exports = (env) ->
         @timerId = null
       super()
 
-    getApiKey: -> Promise.resolve(@apiKey)
-
-    setApiKey: (value) ->
-      if @apiKey is value then return
-      @apiKey = value
-
-    getDays: -> Promise.resolve(@days)
-
-    setDays: (value) ->
-      if @days is value then return
-      @days = value
-
-    getCountry: -> Promise.resolve(@country)
-
-    setCountry: (value) ->
-      if @country is value then return
-      @country = value
-
-    getState: -> Promise.resolve(@state)
-
-    setState: (value) ->
-      if @state is value then return
-      @state = value
-
-    getCity: -> Promise.resolve(@city)
-
-    setCity: (value) ->
-      if @city is value then return
-      @city = value
-
-    getPws: -> Promise.resolve(@pws)
-
-    setPws: (value) ->
-      if @pws is value then return
-      @pws = value
-
-    getWeather: -> Promise.resolve(@weather)
-
-    setWeather: (value) ->
-      @weather = value
-      @emit 'weather', value
-
-    getCurrentTemp: -> Promise.resolve(@currentTemp)
-
-    setCurrentTemp: (value) ->
-      @currentTemp = value
-      @emit 'currentTemp', value
-
-    getCurrentWind: -> Promise.resolve(@currentWind)
-
-    setCurrentWind: (value) ->
-      @currentWind = value
-      @emit 'currentWind', value
-
-    getCurrentWindDir: -> Promise.resolve(@currentWindDir)
-
-    setCurrentWindDir: (value) ->
-      @currentWindDir = value
-      @emit 'currentWindDir', value
-
-    getCurrentWindString: -> Promise.resolve(@currentWindString)
-
-    setCurrentWindString: (value) ->
-      @currentWindString = value
-      @emit 'currentWindString', value
-
-    getCurrentWeather: -> Promise.resolve(@currentWeather)
-
-    setCurrentWeather: (value) ->
-      @currentWeather = value
-      @emit 'currentWeather', value
-
-    getCurrentGust: -> Promise.resolve(@currentGust)
-
-    setCurrentGust: (value) ->
-      @currentGust = value
-      @emit 'currentGust', value
-
-    getHeatIndex: -> Promise.resolve(@heatIndex)
-
-    setHeatIndex: (value) ->
-      @heatIndex = value
-      @emit 'heatIndex', value
-
-    getDewPoint: -> Promise.resolve(@dewPoint)
-
-    setDewPoint: (value) ->
-      @dewPoint = value
-      @emit 'dewPoint', value
-
-    _getUpdatedCurrentTemp: () =>
-      @emit "currentTemp", @currentTemp
-      return Promise.resolve @currentTemp
-
-    _getUpdatedCurrentWind: () =>
-      @emit "currentWind", @currentWind
-      return Promise.resolve @currentWind
-
-    _getUpdatedCurrentWindDir: () =>
-      @emit "currentWindDir", @currentWindDir
-      return Promise.resolve @currentWindDir
-
-    _getUpdatedCurrentWindString: () =>
-      @emit "currentWindString", @currentWindString
-      return Promise.resolve @currentWindString
-
-    _getUpdatedCurrentWeather: () =>
-      @emit "currentWeather", @currentWeather
-      return Promise.resolve @currentWeather
-
-    _getUpdatedCurrentGust: () =>
-      @emit "currentGust", @currentGust
-      return Promise.resolve @currentGust
-
-    _getUpdatedHeatIndex: () =>
-      @emit "heatIndex", @heatIndex
-      return Promise.resolve @heatIndex
-
-    _getUpdatedDewPoint: () =>
-      @emit "dewPoint", @dewPoint
-      return Promise.resolve @dewPoint
+    _setAttribute: (attributeName, value) ->
+      @emit attributeName, value
+      @[attributeName] = value
 
     detectIconClass: (icons) ->
       icon = ''
@@ -318,7 +186,7 @@ module.exports = (env) ->
 
       return icon
 
-    reloadWeather: ->
+    _reloadWeather: ->
       env.logger.info "Reloading weather data..."
       if @pws? and @pws.length > 0
         url = actualPwsUrl.replace('{apiKey}', @apiKey).replace('{pws}', @pws).replace('{lang}', @lang)
@@ -335,7 +203,7 @@ module.exports = (env) ->
           if error.code is "ENOTFOUND"
             env.logger.warn "Cannot connect to :" + url
             placeholder = "<div class=\"wunderground\">Server not reachable at the moment.</div>"
-            @setWeather(placeholder)
+            @_setAttribute "weather", placeholder
           else
             env.logger.error error
 
@@ -349,7 +217,7 @@ module.exports = (env) ->
           catch err
             env.logger.warn err
             placeholder = "<div class=\"wunderground\">Error on parsing server response.</div>"
-            @setWeather(placeholder)
+            @_setAttribute "weather", placeholder
             return
 
         if data and data.current_observation
@@ -382,18 +250,18 @@ module.exports = (env) ->
           pc = pc.replace('<div id="hum">', '<div id="hum">' + hum)
 
           # FILL ATTRIBUTES
-          @setCurrentTemp(parseFloat(data.current_observation.temp_c))
-          @setCurrentGust(parseFloat(data.current_observation.wind_gust_kph))
-          @setCurrentWeather(data.current_observation.weather)
-          @setCurrentWind(parseFloat(data.current_observation.wind_kph))
-          @setCurrentWindString(data.current_observation.wind_string)
-          @setCurrentWindDir(data.current_observation.wind_dir)
-          @setDewPoint(data.current_observation.dewpoint_c)
+          @_setAttribute "currentTemp", parseFloat(data.current_observation.temp_c)
+          @_setAttribute "currentGust", parseFloat(data.current_observation.wind_gust_kph)
+          @_setAttribute "currentWeather", data.current_observation.weather
+          @_setAttribute "currentWind", parseFloat(data.current_observation.wind_kph)
+          @_setAttribute "currentWindString", data.current_observation.wind_string
+          @_setAttribute "currentWindDir", data.current_observation.wind_dir
+          @_setAttribute "dewPoint", data.current_observation.dewpoint_c
 
           if data.current_observation.heat_index_c? and typeof data.current_observation.heat_index_c is 'number'
-            @setHeatIndex(data.current_observation.heat_index_c)
+            @_setAttribute "heatIndex", data.current_observation.heat_index_c
           else
-            @setHeatIndex(-1)
+            @_setAttribute "heatIndex", -1
 
           # HANDLE FORECAST
           if @days and @days > 0
@@ -459,26 +327,22 @@ module.exports = (env) ->
 
                   pc = pc + fcStr
 
-                  @setWeather(pc)
+                  @_setAttribute "weather", pc
 
                 else
-                  @setWeather(pc)
+                  @_setAttribute "weather", pc
 
                   if @days > 0
                     env.logger.warn "no forecast available"
 
           else
-            @setWeather(pc)
+            @_setAttribute "weather", pc
 
         else
           if data and data.response and data.response.error
-            @setWeather("<div class=\"wunderground\">" + data.response.error.description + "</div>")
+            @_setAttribute "weather", "<div class=\"wunderground\">" + data.response.error.description + "</div>"
           else
-            @setWeather("<div class=\"wunderground\">Error on parsing server response.</div>")
-
-
-    destroy: ->
-      super()
+            @_setAttribute "weather", "<div class=\"wunderground\">Error on parsing server response.</div>"
 
   class WundergroundHistoryDevice extends env.devices.Device
     attributes:
@@ -492,9 +356,9 @@ module.exports = (env) ->
         description: 'the past humidity in %'
         type: t.number
 
-    constructor: (@config, @plugin) ->
+    @prepareConfig: (config) =>
       numericAttributes = ['rain', 'temperature', 'humidity']
-      xAttributeOptions = @config.xAttributeOptions
+      xAttributeOptions = config.xAttributeOptions
 
       keys = []
       for i in xAttributeOptions
@@ -510,7 +374,14 @@ module.exports = (env) ->
             }
           )
 
-      @config.xAttributeOptions = xAttributeOptions
+      config.xAttributeOptions = xAttributeOptions
+
+    constructor: (@config, @plugin) ->
+      # create getter function for attributes
+      for attributeName of @attributes
+        @_createGetter(attributeName, =>
+          @initialized.then => Promise.resolve @[attributeName]
+        )
 
       # provide possibility to add labels
       for attribute in @config.attributes
@@ -539,94 +410,23 @@ module.exports = (env) ->
       @temperature = lastState?["temperature"]?.value
       @humidity = lastState?["humidity"]?.value
 
-      @reloadHistoryWeather()
+      @initialized = new Promise (resolve) =>
+        @_reloadHistoryWeather()
+        resolve()
 
       @timerId = setInterval ( =>
-        @reloadHistoryWeather()
+        @_reloadHistoryWeather()
       ), (@interval * 1000 * 60)
 
-      updateValues = =>
-        if @config.interval > 0
-          @_updateValueTimeout = null
-          @_getUpdatedPastTemperature().finally( =>
-            @_getUpdatedPastHumidity().finally( =>
-              @_getUpdatedPastRain().finally( =>
-                @_updateValueTimeout = setTimeout(updateValues, 300000)
-              )
-            )
-          )
-
-
       super(@config)
-      updateValues()
 
-    destroy: () ->
-      if @timerId?
-        clearInterval @timerId
-        @timerId = null
-      super()
 
-    getApiKey: -> Promise.resolve(@apiKey)
+    _setAttribute: (attributeName, value) ->
+      @emit attributeName, value
+      @[attributeName] = value
 
-    setApiKey: (value) ->
-      if @apiKey is value then return
-      @apiKey = value
 
-    getDayOffset: -> Promise.resolve(@dayOffset)
-
-    setDayOffset: (value) ->
-      if @days is value then return
-      @dayOffset = value
-
-    getCountry: -> Promise.resolve(@country)
-
-    setCountry: (value) ->
-      if @country is value then return
-      @country = value
-
-    getState: -> Promise.resolve(@state)
-
-    setState: (value) ->
-      if @state is value then return
-      @state = value
-
-    getCity: -> Promise.resolve(@city)
-
-    setCity: (value) ->
-      if @city is value then return
-      @city = value
-
-    getTemperature: -> Promise.resolve(@temperature)
-
-    setTemperature: (value) ->
-      @temperature = value
-      @emit 'temperature', value
-
-    getHumidity: -> Promise.resolve(@humidity)
-
-    setHumidity: (value) ->
-      @humidity = value
-      @emit 'humidity', value
-
-    getRain: -> Promise.resolve(@rain)
-
-    setRain: (value) ->
-      @rain = value
-      @emit 'rain', value
-
-    _getUpdatedPastTemperature: () =>
-      @emit "temperature", @temperature
-      return Promise.resolve @temperature
-
-    _getUpdatedPastHumidity: () =>
-      @emit "humidity", @humidity
-      return Promise.resolve @humidity
-
-    _getUpdatedPastRain: () =>
-      @emit "rain", @rain
-      return Promise.resolve @rain
-
-    reloadHistoryWeather: ->
+    _reloadHistoryWeather: ->
       env.logger.info "Reloading history weather data..."
 
       url = historyUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
@@ -662,8 +462,6 @@ module.exports = (env) ->
         pastDay = "0" + pastDay;
 
       url = url.replace('{historyDate}', "" + pastYear + pastMonth + pastDay)
-
-      env.logger.info "Requesting url: " + url
 
       Request.get url, (error, response, body) =>
         if error
@@ -709,22 +507,22 @@ module.exports = (env) ->
             tempDay = Math.abs(obDate.mday - pastDay)
             tempHour = Math.abs(obDate.hour - pastHour)
 
-            if tempYear < diffYear
+            if tempYear <= diffYear
               diffYear = tempYear
-              if tempMonth < diffMonth
+              if tempMonth <= diffMonth
                 diffMonth = tempMonth
-                if tempDay < diffDay
+                if tempDay <= diffDay
                   diffDay = tempDay
-                  if tempHour < diffHour
+                  if tempHour <= diffHour
                     diffHour = tempHour
                     match = i
 
             i++
 
           # FILL ATTRIBUTES
-          @setTemperature(parseFloat(observations[match].tempm))
-          @setHumidity(parseFloat(observations[match].hum))
-          @setRain(parseInt(observations[match].rain))
+          @_setAttribute "temperature", parseFloat(observations[match].tempm)
+          @_setAttribute "humidity", parseFloat(observations[match].hum)
+          @_setAttribute "rain", parseInt(observations[match].rain)
 
         else
           if data and data.response and data.response.error
@@ -732,8 +530,10 @@ module.exports = (env) ->
           else
             env.logger.warn "Error on parsing server response."
 
-
-    destroy: ->
+    destroy: () ->
+      if @timerId?
+        clearInterval @timerId
+        @timerId = null
       super()
 
   return new WundergroundPlugin
