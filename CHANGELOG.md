@@ -1,3 +1,6 @@
+**version 0.2.3** *released 2018-04-08*
+* refactored CSS to auto size line height
+
 **version 0.2.2** *released 2018-04-08*
 * Provided humidity as a variable (currentHumidity)
 

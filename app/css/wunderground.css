@@ -10,12 +10,11 @@
 .pimatic-wunderground .col-1, .pimatic-wunderground .col-2 {
     width: 100%;
     float: left;
-    height: 80px;
+    height: auto;
     border-bottom: 2px solid #CCCCCC;
 }
 
 .pimatic-wunderground .icon, .pimatic-wunderground .aktuell, .pimatic-wunderground .forecast, .pimatic-wunderground .hum, .pimatic-wunderground .temp {
-    height: 80px;
     float: left;
 }
 
@@ -24,9 +23,9 @@
     text-align: center;
     vertical-align: middle;
     font-size: 40px;
-    line-height: 80px;
     color: #007dcd;
     float: left;
+    margin-top: 10px;
 }
 
 .pimatic-wunderground .aktuell {
@@ -39,7 +38,6 @@
 
 .pimatic-wunderground #temp, .pimatic-wunderground #hum, .pimatic-wunderground .unit {
     float: left;
-    height: 80px;
     margin-top: 10px;
     height: 70px;
 }
@@ -56,6 +54,7 @@
     font-size: 12px;
     float: left;
     margin-top: 3px;
+    margin-bottom: 5px;
 }
 
 .pimatic-wunderground #temp_high, .pimatic-wunderground #temp_low {
@@ -83,7 +82,7 @@
 }
 
 .pimatic-wunderground .temp, .pimatic-wunderground .hum, .pimatic-wunderground .temp_high, .pimatic-wunderground .temp_low {
-    width: 30%
+    width: 30%;
     font-family: "Oswald", sans-serif;
     font-size: 30px;
     float: left;
