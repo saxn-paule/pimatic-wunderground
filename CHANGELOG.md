@@ -1,3 +1,6 @@
+**version 0.2.2** *released 2018-04-08*
+* Provided humidity as a variable (currentHumidity)
+
 **version 0.2.1** *released 2018-04-06*
 * fixed calculation of correct historical observation entry
 * refactoring

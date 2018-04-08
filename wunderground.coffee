@@ -53,6 +53,9 @@ module.exports = (env) ->
       currentTemp:
         description: 'the current temperature in °C'
         type: t.number
+      currentHumidity:
+        description: 'the current humidity in %'
+        type: t.number
       currentWind:
         description: 'the current wind speed in km/h'
         type: t.number
@@ -95,6 +98,7 @@ module.exports = (env) ->
       @weather = ''
 
       @currentTemp = lastState?["currentTemp"]?.value
+      @currentHumidity = lastState?["currentHumidity"]?.value
       @currentWind = lastState?["currentWind"]?.value
       @currentWindString = lastState?["currentWindString"]?.value
       @currentWindDir = lastState?["currentWindDir"]?.value
@@ -251,6 +255,7 @@ module.exports = (env) ->
 
           # FILL ATTRIBUTES
           @_setAttribute "currentTemp", parseFloat(data.current_observation.temp_c)
+          @_setAttribute "currentHumidity", parseFloat(data.current_observation.relative_humidity)
           @_setAttribute "currentGust", parseFloat(data.current_observation.wind_gust_kph)
           @_setAttribute "currentWeather", data.current_observation.weather
           @_setAttribute "currentWind", parseFloat(data.current_observation.wind_kph)
