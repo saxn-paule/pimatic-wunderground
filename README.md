@@ -20,12 +20,18 @@ The WundergroundDevice provides the following variables
 * **currentGust:** the current gust speed in km/h
 * **dewPoint:** the current dewpoint in °C
 * **heatIndex:** the current heatindex in °C
+* **solarradiation:** the current solarradiation
+* **uv:** the current UV index
         
 
 The WundergroundHistoryDevice provides the following variables
 * **rain:** rain in mm
 * **temperature:** the past temperature in °C
 * **humidity:** the past humidity in %
+* **precip:** the hourly past precipitation in mm
+* **precip_total:** the total past precipitation for the current day in mm
+* **solarradiation:** the current solarradiation
+* **uv:** the current UV index
 
 # Beware
 This plugin is in an early alpha stadium and you use it on your own risk.

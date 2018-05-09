@@ -7,6 +7,7 @@ module.exports = (env) ->
   Request = require 'request'
   actualUrl = "http://api.wunderground.com/api/{apiKey}/conditions/lang:{lang}/q/{country}/{state}{city}.json";
   historyUrl = "http://api.wunderground.com/api/{apiKey}/history_{historyDate}/lang:{lang}/q/{country}/{state}{city}.json";
+  historyPwsUrl = "http://api.wunderground.com/api/{apiKey}/history_{historyDate}/lang:{lang}/q/pws:{pws}.json";
   actualPwsUrl = "http://api.wunderground.com/api/{apiKey}/conditions/lang:{lang}/q/pws:{pws}.json";
   forecastUrl = "http://api.wunderground.com/api/{apiKey}/forecast/lang:{lang}/q/{country}/{state}{city}.json";
   forecastPwsUrl = "http://api.wunderground.com/api/{apiKey}/forecast/lang:{lang}/q/pws:{pws}.json";
@@ -77,6 +78,12 @@ module.exports = (env) ->
       heatIndex:
         description: 'the current heatindex in °C'
         type: t.number
+      solarradiation:
+        description: 'the current solarradiation'
+        type: t.number
+      uv:
+        description: 'the current UV value'
+        type: t.number
 
     constructor: (@config, @plugin) ->
       # create getter function for attributes
@@ -106,6 +113,8 @@ module.exports = (env) ->
       @currentGust = lastState?["currentGust"]?.value
       @heatIndex = lastState?["heatIndex"]?.value
       @dewPoint = lastState?["dewPoint"]?.value
+      @solarradiation = lastState?["solarradiation"]?.value
+      @uv = lastState?["uv"]?.value
 
       @initialized = new Promise (resolve) =>
         @_reloadWeather()
@@ -262,6 +271,8 @@ module.exports = (env) ->
           @_setAttribute "currentWindString", data.current_observation.wind_string
           @_setAttribute "currentWindDir", data.current_observation.wind_dir
           @_setAttribute "dewPoint", data.current_observation.dewpoint_c
+          @_setAttribute "solarradiation", parseInt(data.current_observation.solarradiation)
+          @_setAttribute "uv", parseFloat(data.current_observation.UV)
 
           if data.current_observation.heat_index_c? and typeof data.current_observation.heat_index_c is 'number'
             @_setAttribute "heatIndex", data.current_observation.heat_index_c
@@ -360,9 +371,21 @@ module.exports = (env) ->
       humidity:
         description: 'the past humidity in %'
         type: t.number
+      precip:
+        description: 'the current precipitation in mm'
+        type: t.number
+      precip_total:
+        description: 'the daily precipitation until the specified time in mm'
+        type: t.number
+      solarradiation:
+        description: 'the current solarradiation'
+        type: t.number
+      uv:
+        description: 'the current UV value'
+        type: t.number
 
     @prepareConfig: (config) =>
-      numericAttributes = ['rain', 'temperature', 'humidity']
+      numericAttributes = ['rain', 'temperature', 'humidity', 'precip', 'precip_total', 'solarradiation', 'uv']
       xAttributeOptions = config.xAttributeOptions
 
       keys = []
@@ -405,6 +428,7 @@ module.exports = (env) ->
       @country = @config.country
       @state = @config.state
       @city = @config.city
+      @pws = @config.pws
       @dayOffset = @config.dayOffset
       @timeOffset = @config.timeOffset
       @lang = @config.lang or 'DL'
@@ -434,12 +458,15 @@ module.exports = (env) ->
     _reloadHistoryWeather: ->
       env.logger.info "Reloading history weather data..."
 
-      url = historyUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
-
-      if @state? and @state.length > 0
-        url = url.replace('{state}', @state + '/')
+      if @pws? and @pws.length > 0
+        url = historyPwsUrl.replace('{apiKey}', @apiKey).replace('{pws}', @pws).replace('{lang}', @lang)
       else
-        url = url.replace('{state}', '')
+        url = historyUrl.replace('{apiKey}', @apiKey).replace('{country}', @country).replace('{city}', @city).replace('{lang}', @lang)
+
+        if @state? and @state.length > 0
+          url = url.replace('{state}', @state + '/')
+        else
+          url = url.replace('{state}', '')
 
       # date date to request
       now = new Date().getTime()
@@ -459,11 +486,11 @@ module.exports = (env) ->
       pastYear = past.getUTCFullYear()
 
       pastMonth = past.getUTCMonth() + 1
-      if pastMonth.length < 2
+      if ('' + pastMonth).length < 2
         pastMonth = "0" + pastMonth;
 
       pastDay = past.getUTCDate()
-      if pastDay.length < 2
+      if ('' + pastDay).length < 2
         pastDay = "0" + pastDay;
 
       url = url.replace('{historyDate}', "" + pastYear + pastMonth + pastDay)
@@ -528,6 +555,10 @@ module.exports = (env) ->
           @_setAttribute "temperature", parseFloat(observations[match].tempm)
           @_setAttribute "humidity", parseFloat(observations[match].hum)
           @_setAttribute "rain", parseInt(observations[match].rain)
+          @_setAttribute "precip", parseFloat(observations[match].precip_ratem)
+          @_setAttribute "precip_total", parseFloat(observations[match].precip_totalm)
+          @_setAttribute "solarradiation", parseInt(observations[match].solarradiation)
+          @_setAttribute "uv", parseFloat(observations[match].UV)
 
         else
           if data and data.response and data.response.error

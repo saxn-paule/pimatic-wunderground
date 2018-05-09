@@ -1,3 +1,7 @@
+**version 0.2.4** *released 2018-05-09*
+* Bugfix for days/hours with leading zero in history device
+* added solarradiation, uv, precip and precip_total as variables
+
 **version 0.2.3** *released 2018-04-08*
 * refactored CSS to auto size line height
 
